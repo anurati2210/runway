@@ -1,6 +1,7 @@
-import type { FinanceState, Metrics, RiskLevel } from './types'
+import type { Category, FinanceState, Metrics, RiskLevel } from './types'
 
 const PRIOR_DAYS = 3
+const ONE_OFF: Category[] = ['shopping', 'bills', 'other']
 const clamp = (n: number, min = 0, max = 1) => Math.min(max, Math.max(min, n))
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
 
@@ -41,7 +42,20 @@ export function computeMetrics(s: FinanceState): Metrics {
     0,
     (totalIncome - totalCommitments - totalPlan - s.emergencyBuffer) / s.totalDays,
   )
-  const avgDailySpend = (spent + idealDaily * PRIOR_DAYS) / (day + PRIOR_DAYS)
+
+  // Daily spending pace: everyday spending only, with each day capped.
+  // Big one-offs (shopping, bills, surprises) hit your balance but are not repeated every day.
+  const cap = Math.max(idealDaily * 3, 1)
+  let everydaySpent = 0
+  for (let d = 1; d <= day; d++) {
+    const dayTotal = sum(
+      s.transactions
+        .filter((t) => t.day === d && !ONE_OFF.includes(t.category))
+        .map((t) => t.amount),
+    )
+    everydaySpent += Math.min(dayTotal, cap)
+  }
+  const avgDailySpend = (everydaySpent + idealDaily * PRIOR_DAYS) / (day + PRIOR_DAYS)
 
   const forecastEndBalance =
     balance + futureIncome - upcomingCommitments - goalReserve - avgDailySpend * daysAhead
@@ -51,9 +65,11 @@ export function computeMetrics(s: FinanceState): Metrics {
       ? Math.max(0, (balance + futureIncome - upcomingCommitments - goalReserve) / avgDailySpend)
       : null
 
+  // High = you'd run out of money even if you skipped every remaining savings contribution.
   const velocity = idealDaily > 0 ? avgDailySpend / idealDaily : 0
+  const cashEnd = forecastEndBalance + goalReserve
   let riskLevel: RiskLevel = 'Low'
-  if (forecastEndBalance < 0) riskLevel = 'High'
+  if (cashEnd < 0) riskLevel = 'High'
   else if (forecastEndBalance < s.emergencyBuffer * 0.5 || velocity > 1.5) riskLevel = 'Medium'
 
   const adherence =
