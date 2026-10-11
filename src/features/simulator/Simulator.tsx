@@ -51,7 +51,8 @@ export function Simulator() {
 
   const amt = Number(amount)
   const validAmt = Number.isFinite(amt) && amt > 0
-  const selSub = subId || state.subscriptions[0]?.id || ''
+  const toggleable = state.subscriptions.filter((x) => x.renewalDay > state.currentDay)
+  const selSub = toggleable.some((x) => x.id === subId) ? subId : (toggleable[0]?.id ?? '')
   const selGoal = goalId || state.goals[0]?.id || ''
   const renewalDay = Math.min(
     30,
