@@ -25,7 +25,7 @@ const RISK: Record<RiskLevel, { icon: typeof ShieldCheck; cls: string; msg: stri
   High: {
     icon: ShieldAlert,
     cls: 'border-rose-500/40 bg-rose-500/15 text-rose-300',
-    msg: "At this pace you'll run out before day 30 😬",
+    msg: "At this pace you'll run out before day 30 ",
   },
 }
 

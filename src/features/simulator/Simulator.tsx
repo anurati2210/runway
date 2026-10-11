@@ -30,7 +30,7 @@ function verdict(s: Simulation): string {
   }
   if (s.after.forecastEndBalance < 0) return "You'd end the month in the red. Rethink this one."
   if (s.diff.forecastEndBalance > 0) {
-    return `Nice move 🙌 You'd be ${rupee(s.diff.forecastEndBalance)} better off by day 30.`
+    return `Nice move You'd be ${rupee(s.diff.forecastEndBalance)} better off by day 30.`
   }
   if (s.diff.forecastEndBalance < 0) {
     return `This costs you ${rupee(-s.diff.forecastEndBalance)} by day 30.`
